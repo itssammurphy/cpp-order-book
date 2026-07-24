@@ -1,24 +1,53 @@
 #include <iostream>
 #include "order.hpp"
-
-const char* sideToString(OrderSide side) {
-    return side == OrderSide::Buy ? "BUY" : "SELL";
-}
+#include "order_book.hpp"
 
 int main() {
-    Order order{
+
+    OrderBook book;
+
+    Order buyOne{
         1,
         OrderSide::Buy,
         OrderType::Limit,
         10,
         10,
-        10005 // $100.05
+        10000 // $100.00
     };
 
-    std::cout << "Order book simulation\n";
-    std::cout << "Created order "
-              << order.id << ": " << sideToString(order.side)
-              << " " << order.qty << " @ "
-              << *order.price << "\n";
+    Order buyTwo{
+        2,
+        OrderSide::Buy,
+        OrderType::Limit,
+        5,
+        5,
+        9995 // $99.95
+    };
+
+    Order sellOne{
+        3,
+        OrderSide::Sell,
+        OrderType::Limit,
+        8,
+        8,
+        10005
+    };
+
+    Order sellTwo{
+        4,
+        OrderSide::Sell,
+        OrderType::Limit,
+        10,
+        10,
+        10010
+    };
+
+    book.addLimitOrder(buyOne);
+    book.addLimitOrder(buyTwo);
+    book.addLimitOrder(sellOne);
+    book.addLimitOrder(sellTwo);
+
+    book.print();
+
     return 0;
 }
