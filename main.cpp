@@ -85,21 +85,21 @@ int main() {
     std::cout << "Before market order:\n";
     book.print();
 
-    Order marketBuy{
+    Order marketSell{
         5,
-        OrderSide::Buy,
+        OrderSide::Sell,
         OrderType::Market,
-        5,
-        5,
+        25,
+        25,
         std::nullopt
     };
 
-    std::vector<Trade> trades = book.executeMarketOrder(marketBuy);
+    std::vector<Trade> trades = book.executeMarketOrder(marketSell);
 
     printTrades(trades);
 
     std::cout << "\nMarket order remaining: "
-              << marketBuy.remaining
+              << marketSell.remaining
               << "\n";
 
     std::cout << "After market order:\n";

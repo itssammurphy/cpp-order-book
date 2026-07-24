@@ -24,6 +24,7 @@ at the moment it supports resting limit orders and querying the top of the book.
 - best bid and ask can be safely queried on empty books
 - orders at same price retain arrival order
 - market orders match against resting orders at best price
-- partial fills within one price level
-- market orders don't cross multiple price levels
-- limit order matching and cancellation not yet implemented
+- partial fills for resting and incoming orders
+- market orders continue through multiple price levels if necessary
+- unfilled market order qty is discarded rather than added to book
+- limit order matching and cancellation to come

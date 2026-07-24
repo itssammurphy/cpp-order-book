@@ -130,79 +130,90 @@ std::vector<Trade> OrderBook::executeMarketOrder(Order& order) {
     std::vector<Trade> trades;
 
     if (order.side == OrderSide::Buy) {
-        if (asks.empty()) {
-            return trades;
-        }
+        return matchBuyMarketOrder(order);
+    } 
 
+    return matchSellMarketOrder(order);
+}
+
+std::vector<Trade> OrderBook::matchBuyMarketOrder(Order& order) {
+    std::vector<Trade> trades;
+
+    while (order.remaining > 0 && !asks.empty()) {
         auto bestLevel = asks.begin();
-        Price tradePrice = bestLevel->first;
-        PriceLevel &orders = bestLevel->second;
 
-        while (order.remaining > 0 && !orders.empty()) {
-            Order &maker = orders.front();
+        const Price tradePrice = bestLevel->first;
+        PriceLevel &restingOrders = bestLevel->second;
 
-            Qty fillQty = std::min(
+        while (order.remaining > 0 && !restingOrders.empty()) {
+            Order &maker = restingOrders.front();
+
+            const Qty fillQty = std::min(
                 order.remaining,
                 maker.remaining
             );
 
-            Trade trade{
-                tradePrice,
-                fillQty,
-                OrderSide::Buy,
-                maker.id,
-                order.id
-            };
-
-            trades.push_back(trade);
+            trades.push_back(
+                Trade{
+                    tradePrice,
+                    fillQty,
+                    OrderSide::Buy,
+                    maker.id,
+                    order.id
+                }
+            );
 
             order.remaining -= fillQty;
             maker.remaining -= fillQty;
 
             if (maker.remaining == 0) {
-                orders.pop_front();
+                restingOrders.pop_front();
             }
         }
 
-        if (orders.empty()) {
+        if (restingOrders.empty()) {
             asks.erase(bestLevel);
         }
-    } else {
-        if (bids.empty()) {
-            return trades;
-        }
+    }
 
+    return trades;
+}
+
+std::vector<Trade> OrderBook::matchSellMarketOrder(Order& order) {
+    std::vector<Trade> trades;
+
+    while (order.remaining > 0 && !bids.empty()) {
         auto bestLevel = bids.begin();
-        Price tradePrice = bestLevel->first;
-        PriceLevel &orders = bestLevel->second;
 
-        while (order.remaining > 0 && !orders.empty()) {
-            Order &maker = orders.front();
+        const Price tradePrice = bestLevel->first;
+        PriceLevel& restingOrders = bestLevel->second;
 
-            Qty fillQty = std::min(
+        while (order.remaining > 0 && !restingOrders.empty()) {
+            Order &maker = restingOrders.front();
+
+            const Qty fillQty = std::min(
                 order.remaining,
-                maker.remaining
+                maker.remaining);
+
+            trades.push_back(
+                Trade{
+                    tradePrice,
+                    fillQty,
+                    OrderSide::Sell,
+                    maker.id,
+                    order.id
+                }
             );
-
-            Trade trade{
-                tradePrice,
-                fillQty,
-                OrderSide::Sell,
-                maker.id,
-                order.id
-            };
-
-            trades.push_back(trade);
 
             order.remaining -= fillQty;
             maker.remaining -= fillQty;
 
             if (maker.remaining == 0) {
-                orders.pop_front();
+                restingOrders.pop_front();
             }
         }
 
-        if (orders.empty()) {
+        if (restingOrders.empty()) {
             bids.erase(bestLevel);
         }
     }

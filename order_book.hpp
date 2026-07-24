@@ -26,6 +26,9 @@ class OrderBook{
 
         std::map<Price, PriceLevel, std::greater<Price>> bids;
         std::map<Price, PriceLevel> asks;
+
+        std::vector<Trade> matchBuyMarketOrder(Order &order);
+        std::vector<Trade> matchSellMarketOrder(Order &order);
 };
 
 #endif
