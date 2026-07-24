@@ -352,3 +352,23 @@ bool OrderBook::activeOrderIdExists(OrderId orderId) const {
 bool OrderBook::contains(OrderId orderId) const {
     return orderIndex.find(orderId) != orderIndex.end();
 }
+
+Qty OrderBook::totalVolume(OrderSide side) const {
+    Qty total = 0;
+
+    if (side == OrderSide::Buy) {
+        for (const auto& level : bids) {
+            for (const Order& order : level.second) {
+                total += order.remaining;
+            }
+        }
+    } else {
+        for (const auto& level : asks) {
+            for (const Order& order : level.second) {
+                total += order.remaining;
+            }
+        }
+    }
+
+    return total;
+}

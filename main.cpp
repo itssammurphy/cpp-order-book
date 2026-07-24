@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include "csvlogger.hpp"
 
 void clearScreen() {
     std::cout << "\x1B[2J\x1B[H";
@@ -36,6 +37,8 @@ void printTrades(const std::vector<Trade>& trades) {
 }
 
 int main() {
+    std::filesystem::create_directories("output");
+
     OrderBook book;
 
     SimConfig config;
@@ -45,27 +48,42 @@ int main() {
 
     MarketSim simulator(book, config);
 
-    constexpr int numberOfSteps = 31;
+    CsvLogger logger(
+        "output/booksnapshots.csv",
+        "output/trades.csv");
+
+    constexpr int numberOfSteps = 10;
 
     for (int i = 0; i < numberOfSteps; ++i) {
         std::vector<Trade> trades = simulator.step();
 
-        clearScreen();
+        logger.logSnapshot(
+            simulator.stepCount(),
+            simulator.fairValue(),
+            book
+        );
 
-        std::cout << "\nSIM STEP "
-                  << simulator.stepCount() << "\n";
+        logger.logTrades(
+            simulator.stepCount(),
+            trades
+        );
 
-        std::cout << "Fair value: "
-                  << std::fixed << std::setprecision(2)
-                  << simulator.fairValue() << "\n";
+        // clearScreen();
 
-        printTrades(trades);
-        book.print();
+        // std::cout << "\nSIM STEP "
+        //           << simulator.stepCount() << "\n";
 
-        std::cout.flush();
+        // std::cout << "Fair value: "
+        //           << std::fixed << std::setprecision(2)
+        //           << simulator.fairValue() << "\n";
 
-        std::this_thread::sleep_for(
-            std::chrono::milliseconds(100));
+        // printTrades(trades);
+        // book.print();
+
+        // std::cout.flush();
+
+        // std::this_thread::sleep_for(
+        //     std::chrono::milliseconds(100));
     }
 
     return 0;

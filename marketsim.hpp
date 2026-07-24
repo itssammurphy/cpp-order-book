@@ -12,18 +12,18 @@ struct SimConfig {
     double startingFairValue = 100.00; // normal decimal dollars
 
     // random walk parameters
-    double drift = 0.0;
-    double vol = 0.5;
+    double drift = 0.25;
+    double vol = 0.7;
 
     // order rates
-    double limitOrderRate = 6.0;
-    double marketOrderRate = 1.2;
-    double cancelRate = 2.0;
+    double limitOrderRate = 10.0;
+    double marketOrderRate = 2;
+    double cancelRate = 1.0;
 
     // order distance in cents
-    double meanOffsetCents = 7.5;
+    double meanOffsetCents = 10.0;
 
-    double aggroLimitProb = 0.1;
+    double aggroLimitProb = 0.01;
 
     Qty minOrderQty = 1;
     Qty maxOrderQty = 12;

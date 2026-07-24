@@ -25,6 +25,8 @@ class OrderBook{
         bool cancelOrder(OrderId orderId);
         bool contains(OrderId orderId) const;
 
+        Qty totalVolume(OrderSide side) const;
+
     private:
         using PriceLevel = std::list<Order>;
 

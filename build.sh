@@ -9,7 +9,8 @@ g++ \
     -pedantic \
     main.cpp \
     order_book.cpp \
-    marketsim.cpp\
+    marketsim.cpp \
+    csvlogger.cpp \
     -o build/orderbook
 
 echo "Build finished: ./build/orderbook"
