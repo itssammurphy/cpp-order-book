@@ -77,29 +77,28 @@ int main() {
         10010
     };
 
-    book.addLimitOrder(buyOne);
-    book.addLimitOrder(buyTwo);
-    book.addLimitOrder(sellOne);
-    book.addLimitOrder(sellTwo);
+    book.submitLimitOrder(buyOne);
+    book.submitLimitOrder(buyTwo);
+    book.submitLimitOrder(sellOne);
+    book.submitLimitOrder(sellTwo);
 
     std::cout << "Before market order:\n";
     book.print();
 
-    Order marketSell{
+    Order aggroBuy{
         5,
-        OrderSide::Sell,
-        OrderType::Market,
-        25,
-        25,
-        std::nullopt
-    };
+        OrderSide::Buy,
+        OrderType::Limit,
+        20,
+        20,
+        9900};
 
-    std::vector<Trade> trades = book.executeMarketOrder(marketSell);
+    std::vector<Trade> trades = book.submitLimitOrder(aggroBuy);
 
     printTrades(trades);
 
     std::cout << "\nMarket order remaining: "
-              << marketSell.remaining
+              << aggroBuy.remaining
               << "\n";
 
     std::cout << "After market order:\n";

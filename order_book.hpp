@@ -9,8 +9,6 @@
 
 class OrderBook{
     public:
-        void addLimitOrder(const Order &order);
-
         bool empty(OrderSide side) const;
         std::size_t orderCount(OrderSide side) const;
 
@@ -19,7 +17,8 @@ class OrderBook{
 
         void print() const;
 
-        std::vector<Trade> executeMarketOrder(Order &order);
+        std::vector<Trade> submitLimitOrder(Order& order);
+        std::vector<Trade> executeMarketOrder(Order& order);
 
     private:
         using PriceLevel = std::deque<Order>;
@@ -27,8 +26,12 @@ class OrderBook{
         std::map<Price, PriceLevel, std::greater<Price>> bids;
         std::map<Price, PriceLevel> asks;
 
-        std::vector<Trade> matchBuyMarketOrder(Order &order);
-        std::vector<Trade> matchSellMarketOrder(Order &order);
+        std::vector<Trade> matchBuyOrder(Order &order);
+        std::vector<Trade> matchSellOrder(Order &order);
+
+        void addRestingOrder(const Order& order);
+
+        bool canMatch(const Order& order, Price oppositePrice) const;
 };
 
 #endif

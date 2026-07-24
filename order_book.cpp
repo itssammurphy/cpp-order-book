@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <algorithm>
 
-void OrderBook::addLimitOrder(const Order& order) {
+std::vector<Trade> OrderBook::submitLimitOrder(Order& order) {
     if (order.type != OrderType::Limit) {
         throw std::invalid_argument(
             "Only limit orders can rest in the order book");
@@ -24,13 +24,19 @@ void OrderBook::addLimitOrder(const Order& order) {
             "Order qty is invalid");
     }
 
-    const Price orderPrice = order.price.value();
+    std::vector<Trade> trades;
 
     if (order.side == OrderSide::Buy) {
-        bids[orderPrice].push_back(order);
+        trades = matchBuyOrder(order);
     } else {
-        asks[orderPrice].push_back(order);
+        trades = matchSellOrder(order);
     }
+
+    if (order.remaining > 0) {
+        addRestingOrder(order);
+    }
+
+    return trades;
 }
 
 bool OrderBook::empty(OrderSide side) const {
@@ -127,22 +133,25 @@ std::vector<Trade> OrderBook::executeMarketOrder(Order& order) {
             "Order qty is invalid");
     }
 
-    std::vector<Trade> trades;
-
     if (order.side == OrderSide::Buy) {
-        return matchBuyMarketOrder(order);
+        return matchBuyOrder(order);
     } 
 
-    return matchSellMarketOrder(order);
+    return matchSellOrder(order);
 }
 
-std::vector<Trade> OrderBook::matchBuyMarketOrder(Order& order) {
+std::vector<Trade> OrderBook::matchBuyOrder(Order& order) {
     std::vector<Trade> trades;
 
     while (order.remaining > 0 && !asks.empty()) {
         auto bestLevel = asks.begin();
 
         const Price tradePrice = bestLevel->first;
+
+        if (!canMatch(order, tradePrice)) {
+            break;
+        }
+
         PriceLevel &restingOrders = bestLevel->second;
 
         while (order.remaining > 0 && !restingOrders.empty()) {
@@ -179,13 +188,18 @@ std::vector<Trade> OrderBook::matchBuyMarketOrder(Order& order) {
     return trades;
 }
 
-std::vector<Trade> OrderBook::matchSellMarketOrder(Order& order) {
+std::vector<Trade> OrderBook::matchSellOrder(Order& order) {
     std::vector<Trade> trades;
 
     while (order.remaining > 0 && !bids.empty()) {
         auto bestLevel = bids.begin();
 
         const Price tradePrice = bestLevel->first;
+
+        if (!canMatch(order, tradePrice)) {
+            break;
+        }
+
         PriceLevel& restingOrders = bestLevel->second;
 
         while (order.remaining > 0 && !restingOrders.empty()) {
@@ -219,4 +233,36 @@ std::vector<Trade> OrderBook::matchSellMarketOrder(Order& order) {
     }
 
     return trades;
+}
+
+void OrderBook::addRestingOrder(const Order& order) {
+    if (!order.price.has_value()) {
+        throw std::invalid_argument("A resting order must have a price");
+    }
+
+    const Price orderPrice = order.price.value();
+
+    if (order.side == OrderSide::Buy) {
+        bids[orderPrice].push_back(order);
+    } else {
+        asks[orderPrice].push_back(order);
+    }
+}
+
+bool OrderBook::canMatch(const Order& order, Price oppositePrice) const {
+    if (order.type == OrderType::Market) {
+        return true;
+    }
+
+    if (!order.price.has_value()) {
+        return false;
+    }
+
+    const Price limitPrice = order.price.value();
+
+    if (order.side == OrderSide::Buy) {
+        return oppositePrice <= limitPrice;
+    }
+
+    return oppositePrice >= limitPrice;
 }
