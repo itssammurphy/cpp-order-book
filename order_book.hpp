@@ -5,6 +5,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <vector>
 
 class OrderBook{
     public:
@@ -17,6 +18,8 @@ class OrderBook{
         std::optional<Price> bestAsk() const;
 
         void print() const;
+
+        std::vector<Trade> executeMarketOrder(Order &order);
 
     private:
         using PriceLevel = std::deque<Order>;

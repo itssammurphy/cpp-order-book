@@ -3,6 +3,7 @@
 #include "order_book.hpp"
 #include <iomanip>
 #include <optional>
+#include <vector>
 
 void printPrice(const std::optional<Price>& price) {
     if (!price.has_value()) {
@@ -11,6 +12,29 @@ void printPrice(const std::optional<Price>& price) {
     }
 
     std::cout << std::fixed << std::setprecision(2) << static_cast<double>(price.value()) / 100.0;
+}
+
+void printTrades(const std::vector<Trade>& trades) {
+    if (trades.empty()) {
+        std::cout << "no trades\n";
+        return;
+    }
+
+    std::cout << "TRADES\n";
+    std::cout << "--------------\n";
+
+    for (const Trade& trade : trades) {
+        std::cout << "Price: "
+                  << std::fixed << std::setprecision(2)
+                  << static_cast<double>(trade.price) / 100.0
+                  << ", Qty: "
+                  << trade.qty
+                  << ", Maker: "
+                  << trade.makerId
+                  << ", Taker: "
+                  << trade.takerId
+                  << "\n";
+    }
 }
 
 int main() {
@@ -58,6 +82,27 @@ int main() {
     book.addLimitOrder(sellOne);
     book.addLimitOrder(sellTwo);
 
+    std::cout << "Before market order:\n";
+    book.print();
+
+    Order marketBuy{
+        5,
+        OrderSide::Buy,
+        OrderType::Market,
+        5,
+        5,
+        std::nullopt
+    };
+
+    std::vector<Trade> trades = book.executeMarketOrder(marketBuy);
+
+    printTrades(trades);
+
+    std::cout << "\nMarket order remaining: "
+              << marketBuy.remaining
+              << "\n";
+
+    std::cout << "After market order:\n";
     book.print();
 
     std::cout << "Best bid: ";
