@@ -97,19 +97,16 @@ int main() {
 
     printTrades(trades);
 
-    std::cout << "\nMarket order remaining: "
-              << aggroBuy.remaining
-              << "\n";
+    std::cout << "\nCancelling order 5...\n";
 
-    std::cout << "After market order:\n";
+    const bool cancelled = book.cancelOrder(5);
+
+    std::cout << "Cancellation successful: "
+              << std::boolalpha
+              << cancelled
+              << '\n';
+
     book.print();
-
-    std::cout << "Best bid: ";
-    printPrice(book.bestBid());
-    std::cout << "\n";
-    std::cout << "Best ask: ";
-    printPrice(book.bestAsk());
-    std::cout << "\n";
 
     return 0;
 }

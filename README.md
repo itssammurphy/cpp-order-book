@@ -27,4 +27,6 @@ at the moment it supports resting limit orders and querying the top of the book.
 - partial fills for resting and incoming orders
 - market orders continue through multiple price levels if necessary
 - unfilled market order qty is discarded rather than added to book
-- limit order matching and cancellation to come
+- resting orders can be cancelled by their id
+- id-wise cancellation doesn't scan the whole book during cancellation
+- fully-filled orders are removed from the cancellation index

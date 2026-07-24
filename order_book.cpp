@@ -51,12 +51,12 @@ std::size_t OrderBook::orderCount(OrderSide side) const {
     std::size_t count = 0;
 
     if (side == OrderSide::Buy) {
-        for (const auto&[price, orders] : bids) {
-            count += orders.size();
+        for (const auto& level : bids) {
+            count += level.second.size();
         }
     } else {
-        for (const auto&[price, orders] : asks) {
-            count += orders.size();
+        for (const auto& level : asks) {
+            count += level.second.size();
         }
     }
 
@@ -133,6 +133,10 @@ std::vector<Trade> OrderBook::executeMarketOrder(Order& order) {
             "Order qty is invalid");
     }
 
+    if (activeOrderIdExists(order.id)) {
+        throw std::invalid_argument("Order is already active");
+    }
+
     if (order.side == OrderSide::Buy) {
         return matchBuyOrder(order);
     } 
@@ -176,6 +180,7 @@ std::vector<Trade> OrderBook::matchBuyOrder(Order& order) {
             maker.remaining -= fillQty;
 
             if (maker.remaining == 0) {
+                orderIndex.erase(maker.id);
                 restingOrders.pop_front();
             }
         }
@@ -223,6 +228,7 @@ std::vector<Trade> OrderBook::matchSellOrder(Order& order) {
             maker.remaining -= fillQty;
 
             if (maker.remaining == 0) {
+                orderIndex.erase(maker.id);
                 restingOrders.pop_front();
             }
         }
@@ -243,9 +249,37 @@ void OrderBook::addRestingOrder(const Order& order) {
     const Price orderPrice = order.price.value();
 
     if (order.side == OrderSide::Buy) {
-        bids[orderPrice].push_back(order);
-    } else {
-        asks[orderPrice].push_back(order);
+        PriceLevel &level = bids[orderPrice];
+
+        level.push_back(order);
+
+        auto orderIterator = std::prev(level.end());
+
+        orderIndex.emplace(
+            order.id,
+            OrderLocation{
+                OrderSide::Buy,
+                orderPrice,
+                orderIterator
+            }
+        );
+    }
+    else
+    {
+        PriceLevel &level = asks[orderPrice];
+
+        level.push_back(order);
+
+        auto orderIterator = std::prev(level.end());
+
+        orderIndex.emplace(
+            order.id,
+            OrderLocation{
+                OrderSide::Sell,
+                orderPrice,
+                orderIterator
+            }
+        );
     }
 }
 
@@ -265,4 +299,52 @@ bool OrderBook::canMatch(const Order& order, Price oppositePrice) const {
     }
 
     return oppositePrice >= limitPrice;
+}
+
+bool OrderBook::cancelOrder(OrderId orderId) {
+    auto locationIterator = orderIndex.find(orderId);
+
+    if (locationIterator == orderIndex.end()) {
+        return false;
+    }
+
+    const OrderLocation loc = locationIterator->second;
+
+    if (loc.side == OrderSide::Buy) {
+        auto levelIterator = bids.find(loc.price);
+
+        if (levelIterator == bids.end()) {
+            throw std::logic_error("Order index refers to missing bid level");
+        }
+
+        PriceLevel &level = levelIterator->second;
+
+        level.erase(loc.order);
+
+        if (level.empty()) {
+            bids.erase(levelIterator);
+        }
+    } else {
+        auto levelIterator = asks.find(loc.price);
+
+        if (levelIterator == asks.end()) {
+            throw std::logic_error("Order index refers to a missing ask level");
+        }
+
+        PriceLevel &level = levelIterator->second;
+
+        level.erase(loc.order);
+
+        if (level.empty()) {
+            asks.erase(levelIterator);
+        }
+    }
+
+    orderIndex.erase(locationIterator);
+
+    return true;
+}
+
+bool OrderBook::activeOrderIdExists(OrderId orderId) const {
+    return orderIndex.find(orderId) != orderIndex.end();
 }
