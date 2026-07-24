@@ -23,6 +23,7 @@ class OrderBook{
         std::vector<Trade> executeMarketOrder(Order& order);
 
         bool cancelOrder(OrderId orderId);
+        bool contains(OrderId orderId) const;
 
     private:
         using PriceLevel = std::list<Order>;

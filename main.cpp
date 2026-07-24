@@ -1,112 +1,72 @@
-#include <iostream>
+#include "marketsim.hpp"
 #include "order.hpp"
 #include "order_book.hpp"
+#include <chrono>
 #include <iomanip>
-#include <optional>
+#include <iostream>
+#include <thread>
 #include <vector>
 
-void printPrice(const std::optional<Price>& price) {
-    if (!price.has_value()) {
-        std::cout << "none";
-        return;
-    }
-
-    std::cout << std::fixed << std::setprecision(2) << static_cast<double>(price.value()) / 100.0;
+void clearScreen() {
+    std::cout << "\x1B[2J\x1B[H";
 }
 
 void printTrades(const std::vector<Trade>& trades) {
-    if (trades.empty()) {
-        std::cout << "no trades\n";
+    if (trades.empty())
+    {
+        std::cout << "No trades this step\n";
         return;
     }
 
     std::cout << "TRADES\n";
-    std::cout << "--------------\n";
+    std::cout << "----------------------------------------\n";
 
     for (const Trade& trade : trades) {
-        std::cout << "Price: "
-                  << std::fixed << std::setprecision(2)
+        const char *aggressor = trade.aggressor == OrderSide::Buy ? "BUY" : "SELL";
+
+        std::cout << "Trade "
+                  << std::fixed
+                  << std::setprecision(2)
                   << static_cast<double>(trade.price) / 100.0
-                  << ", Qty: "
+                  << " x "
                   << trade.qty
-                  << ", Maker: "
-                  << trade.makerId
-                  << ", Taker: "
-                  << trade.takerId
-                  << "\n";
+                  << " | aggressor: "
+                  << aggressor << "\n";
     }
 }
 
 int main() {
-
     OrderBook book;
 
-    Order buyOne{
-        1,
-        OrderSide::Buy,
-        OrderType::Limit,
-        10,
-        10,
-        10000 // $100.00
-    };
+    SimConfig config;
+    config.limitOrderRate = 5.0;
+    config.marketOrderRate = 1.0;
+    config.cancelRate = 2.0;
 
-    Order buyTwo{
-        2,
-        OrderSide::Buy,
-        OrderType::Limit,
-        5,
-        5,
-        9995 // $99.95
-    };
+    MarketSim simulator(book, config);
 
-    Order sellOne{
-        3,
-        OrderSide::Sell,
-        OrderType::Limit,
-        8,
-        8,
-        10005
-    };
+    constexpr int numberOfSteps = 31;
 
-    Order sellTwo{
-        4,
-        OrderSide::Sell,
-        OrderType::Limit,
-        10,
-        10,
-        10010
-    };
+    for (int i = 0; i < numberOfSteps; ++i) {
+        std::vector<Trade> trades = simulator.step();
 
-    book.submitLimitOrder(buyOne);
-    book.submitLimitOrder(buyTwo);
-    book.submitLimitOrder(sellOne);
-    book.submitLimitOrder(sellTwo);
+        clearScreen();
 
-    std::cout << "Before market order:\n";
-    book.print();
+        std::cout << "\nSIM STEP "
+                  << simulator.stepCount() << "\n";
 
-    Order aggroBuy{
-        5,
-        OrderSide::Buy,
-        OrderType::Limit,
-        20,
-        20,
-        9900};
+        std::cout << "Fair value: "
+                  << std::fixed << std::setprecision(2)
+                  << simulator.fairValue() << "\n";
 
-    std::vector<Trade> trades = book.submitLimitOrder(aggroBuy);
+        printTrades(trades);
+        book.print();
 
-    printTrades(trades);
+        std::cout.flush();
 
-    std::cout << "\nCancelling order 5...\n";
-
-    const bool cancelled = book.cancelOrder(5);
-
-    std::cout << "Cancellation successful: "
-              << std::boolalpha
-              << cancelled
-              << '\n';
-
-    book.print();
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(100));
+    }
 
     return 0;
 }

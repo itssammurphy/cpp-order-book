@@ -348,3 +348,7 @@ bool OrderBook::cancelOrder(OrderId orderId) {
 bool OrderBook::activeOrderIdExists(OrderId orderId) const {
     return orderIndex.find(orderId) != orderIndex.end();
 }
+
+bool OrderBook::contains(OrderId orderId) const {
+    return orderIndex.find(orderId) != orderIndex.end();
+}
