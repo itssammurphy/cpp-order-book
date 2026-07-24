@@ -94,3 +94,19 @@ void OrderBook::print() const {
 
     std::cout << "\n";
 }
+
+std::optional<Price> OrderBook::bestBid() const {
+    if (bids.empty()) {
+        return std::nullopt;
+    }
+
+    return bids.begin()->first;
+}
+
+std::optional<Price> OrderBook::bestAsk() const {
+    if (asks.empty()) {
+        return std::nullopt;
+    }
+
+    return asks.begin()->first;
+}

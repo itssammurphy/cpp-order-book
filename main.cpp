@@ -1,6 +1,17 @@
 #include <iostream>
 #include "order.hpp"
 #include "order_book.hpp"
+#include <iomanip>
+#include <optional>
+
+void printPrice(const std::optional<Price>& price) {
+    if (!price.has_value()) {
+        std::cout << "none";
+        return;
+    }
+
+    std::cout << std::fixed << std::setprecision(2) << static_cast<double>(price.value()) / 100.0;
+}
 
 int main() {
 
@@ -48,6 +59,13 @@ int main() {
     book.addLimitOrder(sellTwo);
 
     book.print();
+
+    std::cout << "Best bid: ";
+    printPrice(book.bestBid());
+    std::cout << "\n";
+    std::cout << "Best ask: ";
+    printPrice(book.bestAsk());
+    std::cout << "\n";
 
     return 0;
 }

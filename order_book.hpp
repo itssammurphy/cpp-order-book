@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include <map>
+#include <optional>
 
 class OrderBook{
     public:
@@ -11,6 +12,9 @@ class OrderBook{
 
         bool empty(OrderSide side) const;
         std::size_t orderCount(OrderSide side) const;
+
+        std::optional<Price> bestBid() const;
+        std::optional<Price> bestAsk() const;
 
         void print() const;
 
